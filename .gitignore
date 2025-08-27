@@ -2,11 +2,11 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/CurrencyConverter/bin/Debug/net8.0
-/CurrencyConverterTest/obj/Debug/net8.0
+/CurrencyConverter/bin/
+/CurrencyConverterTest/obj/
 /.vs/CurrencyConverter/CopilotIndices/
 /.vs
-/CurrencyConverterIntegrationTests/bin/Debug/net8.0
-/CurrencyConverterTest/bin/Debug/net8.0
-/CurrencyConverterIntegrationTests/obj/Debug/net8.0
+/CurrencyConverterIntegrationTests/bin/
+/CurrencyConverterTest/bin/
+/CurrencyConverterIntegrationTests/obj/
 /CurrencyConverter/obj

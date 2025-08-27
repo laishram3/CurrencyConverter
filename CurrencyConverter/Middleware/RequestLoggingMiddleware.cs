@@ -1,4 +1,7 @@
-﻿namespace CurrencyConverter.Middleware;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+
+namespace CurrencyConverter.Middleware;
 
 public class RequestLoggingMiddleware
 {
@@ -28,8 +31,15 @@ public class RequestLoggingMiddleware
             var endpoint = context.Request.Path;
             var statusCode = context.Response.StatusCode;
 
+            string clientId = "N/A";
            
-            var clientId = context.User?.Claims?.FirstOrDefault(c => c.Type == "client_id")?.Value;
+            if (context.User?.Identity?.IsAuthenticated == true)
+            {                
+                clientId = context.User.FindFirst("name")?.Value
+                        ?? context.User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value
+                        ?? context.User.FindFirst(ClaimTypes.Name)?.Value
+                        ?? "N/A";
+            }          
 
             _logger.LogInformation("Request info: {@RequestDetails}", new
             {
