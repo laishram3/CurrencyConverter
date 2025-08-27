@@ -1,4 +1,6 @@
 ﻿
+using System.Text.Json;
+
 namespace CurrencyConverter.Providers;
 
 public class FrankfurterCurrencyProvider : ICurrencyProvider
@@ -42,12 +44,40 @@ public class FrankfurterCurrencyProvider : ICurrencyProvider
         return await response.Content.ReadAsStringAsync();
     }
 
-   
-    public async Task<string> GetHistoricalRatesAsync(string from, string to, DateTime start, DateTime end, int page, int pageSize)
-    {
+
+    public async Task<string> GetHistoricalRatesAsync(string from, string to, DateTime start, DateTime end, int page, int pageSize) 
+    { 
         var client = _clientFactory.CreateClient("FrankfurterClient");
         var response = await client.GetAsync($"{_baseUrl}/{start:yyyy-MM-dd}..{end:yyyy-MM-dd}?from={from}&to={to}");
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
+        response.EnsureSuccessStatusCode(); 
+        var apiResult = await response.Content.ReadFromJsonAsync<ExchangeRateResult>(); 
+
+        if (apiResult == null || apiResult.Rates == null || !apiResult.Rates.Any()) 
+            return string.Empty;
+        
+        var allRates = apiResult.Rates.Select(r => new KeyValuePair<DateTime, decimal>(DateTime.Parse(r.Key), r.Value.Values.First())).OrderBy(r => r.Key).ToList(); 
+        int totalRecords = allRates.Count; 
+        int totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize); 
+        var data = allRates.Skip((page - 1) * pageSize).Take(pageSize).ToList(); 
+
+        var pagedResult = new PagedRates { 
+            Page = page, PageSize = pageSize, TotalRecords = totalRecords, TotalPages = totalPages, Data = data
+        };
+
+        return JsonSerializer.Serialize(pagedResult); 
     }
+}
+
+public class ExchangeRateResult
+{
+    public Dictionary<string, Dictionary<string, decimal>> Rates { get; set; }
+}
+
+public class PagedRates
+{
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalRecords { get; set; }
+    public int TotalPages { get; set; }
+    public List<KeyValuePair<DateTime, decimal>> Data { get; set; }
 }

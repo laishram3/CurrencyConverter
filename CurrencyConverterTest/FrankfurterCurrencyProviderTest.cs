@@ -91,22 +91,65 @@
     }
 
     [Fact]
-    public async Task GetHistoricalRatesAsync_ReturnsHttpContent()
+    public async Task GetHistoricalRatesAsync_ReturnsPagedResult_AsString()
     {
         // Arrange
-        var responseContent = "[{\"From\":\"EUR\",\"To\":\"USD\",\"Date\":\"2025-08-27T00:00:00Z\",\"Rate\":1.1}]";
-        var client = GetMockHttpClient(responseContent);
+        var from = "EUR";
+        var to = "USD";
+        var start = new DateTime(2025, 01, 01);
+        var end = new DateTime(2025, 01, 03);
+        int page = 1, pageSize = 2;
 
-        _httpClientFactoryMock.Setup(f => f.CreateClient("FrankfurterClient"))
-                              .Returns(client);
+        var exchangeRates = new ExchangeRateResult
+        {
+            Rates = new Dictionary<string, Dictionary<string, decimal>>
+            {
+                { "2025-01-01", new Dictionary<string, decimal> { { "USD", 1.1m } } },
+                { "2025-01-02", new Dictionary<string, decimal> { { "USD", 1.2m } } },
+                { "2025-01-03", new Dictionary<string, decimal> { { "USD", 1.3m } } }
+            }
+        };
 
-        var start = new DateTime(2025, 8, 25);
-        var end = new DateTime(2025, 8, 27);
+        // Mock HttpMessageHandler to return the fake response
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(exchangeRates)
+            });
+
+        var httpClient = new HttpClient(handlerMock.Object);
+
+        var clientFactoryMock = new Mock<IHttpClientFactory>();
+        clientFactoryMock.Setup(f => f.CreateClient("FrankfurterClient"))
+                         .Returns(httpClient);
+
+        var memoryCacheMock = new Mock<IMemoryCache>();
+        var optionsMock = Options.Create(new FrankfurterSettings { BaseUrl = "https://api.frankfurter.app" });
+
+        var provider = new FrankfurterCurrencyProvider(clientFactoryMock.Object, memoryCacheMock.Object, optionsMock);
 
         // Act
-        var result = await _provider.GetHistoricalRatesAsync("EUR", "USD", start, end, 1, 10);
+        var result = await provider.GetHistoricalRatesAsync(from, to, start, end, page, pageSize);
 
         // Assert
-        Assert.Equal(responseContent, result);
+        Assert.False(string.IsNullOrEmpty(result));
+
+        var pagedResult = JsonSerializer.Deserialize<PagedRates>(result);
+        Assert.NotNull(pagedResult);
+        Assert.Equal(page, pagedResult.Page);
+        Assert.Equal(pageSize, pagedResult.PageSize);
+        Assert.Equal(3, pagedResult.TotalRecords);
+        Assert.Equal(2, pagedResult.TotalPages); 
+        Assert.Equal(2, pagedResult.Data.Count);
+        Assert.Equal(1.1m, pagedResult.Data[0].Value);
+        Assert.Equal(1.2m, pagedResult.Data[1].Value);
     }
 }
