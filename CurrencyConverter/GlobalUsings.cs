@@ -1,0 +1,17 @@
+﻿global using CurrencyConverter.Middleware;
+global using CurrencyConverter.Model;
+global using CurrencyConverter.Providers;
+global using CurrencyConverter.Service;
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.Extensions.Caching.Memory;
+global using Microsoft.Extensions.Options;
+global using Microsoft.IdentityModel.Tokens;
+global using OpenTelemetry.Resources;
+global using OpenTelemetry.Trace;
+global using Polly;
+global using Polly.Extensions.Http;
+global using System.Diagnostics;
+global using System.Text;
+global using Serilog;
