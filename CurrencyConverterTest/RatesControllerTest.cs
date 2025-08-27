@@ -1,12 +1,10 @@
-﻿using Moq;
-using System.Text.Json;
-
-namespace CurrencyConverterTest;
+﻿namespace CurrencyConverterTest;
 
 public class CurrencyControllerTests
 {
     private readonly Mock<ICurrencyService> _mockService;
     private readonly CurrencyController _controller;
+    private readonly Mock<ILogger<CurrencyController>> _mockLogger;
 
     public CurrencyControllerTests()
     {
@@ -15,7 +13,8 @@ public class CurrencyControllerTests
         {            
             DisallowedCurrencies = new[] { "TRY", "PLN", "THB", "MXN" }
         });
-        _controller = new CurrencyController(_mockService.Object, settings);
+        _mockLogger = new Mock<ILogger<CurrencyController>>();
+        _controller = new CurrencyController(_mockService.Object, _mockLogger.Object, settings);
     }
 
     [Fact]

@@ -6,3 +6,7 @@
 /CurrencyConverterTest/obj/Debug/net8.0
 /.vs/CurrencyConverter/CopilotIndices/
 /.vs
+/CurrencyConverterIntegrationTests/bin/Debug/net8.0
+/CurrencyConverterTest/bin/Debug/net8.0
+/CurrencyConverterIntegrationTests/obj/Debug/net8.0
+/CurrencyConverter/obj
